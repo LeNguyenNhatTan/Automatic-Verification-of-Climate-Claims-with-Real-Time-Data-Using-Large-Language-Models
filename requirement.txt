@@ -1,0 +1,6 @@
+openai==1.35.10
+requests
+langchain==0.2.5
+chromadb
+sentence-transformers
+transformers
