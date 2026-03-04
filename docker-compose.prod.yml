@@ -1,0 +1,10 @@
+services:
+  climate_api:
+    image: climate_app:prod
+    container_name: climate_api
+    restart: always
+    command: uvicorn main:app --workers 1 --host 0.0.0.0 --port 8005
+    ports:
+      - "8005:8005"
+    env_file:
+      - .env
