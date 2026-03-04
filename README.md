@@ -1,60 +1,268 @@
-# Automatic Verification of Climate Claims with Real-Time Data Using Large Language Models
+# TruthSeeker - Xác Thực Tự Động Các Phát Ngôn Về Khí Hậu Bằng Dữ Liệu Thực Tế và Mô Hình Ngôn Ngữ Lớn
 
-## Giới thiệu
+**TruthSeeker** là một hệ thống kiểm tra tính xác thực các phát ngôn liên quan đến khí hậu sử dụng GPT-4, tranh luận đa tác nhân (Multi-Agent Debate), và dữ liệu thời gian thực từ các nguồn uy tín (NASA, NCEI). Hệ thống này giúp phát hiện thông tin sai lệch, đánh giá độ đáng tin cậy của phát ngôn, và hỗ trợ truyền thông khí hậu chính xác.
 
-Đây là framework kiểm tra tính xác thực các phát ngôn liên quan đến khí hậu, sử dụng GPT-4 và mô hình tranh luận đa tác nhân, tích hợp dữ liệu thời gian thực từ các nguồn uy tín (NASA, NCEI) nhằm phát hiện thông tin sai lệch và hỗ trợ truyền thông khí hậu chính xác.
+## Mục lục
 
-## Tính năng chính
+- [Tính năng](#tính-năng)
+- [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
+- [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
+- [Cài đặt](#cài-đặt)
+- [Cấu hình](#cấu-hình)
+- [Sử dụng](#sử-dụng)
+- [Cấu trúc dự án](#cấu-trúc-dự-án)
+- [Quy trình xác thực](#quy-trình-xác-thực)
+- [API và Tích hợp](#api-và-tích-hợp)
+- [Ví dụ](#ví-dụ)
+- [Triển khai với Docker](#triển-khai-với-docker)
+- [Tài liệu tham khảo](#tài-liệu-tham-khảo)
+- [Đóng góp](#đóng-góp)
+- [Liên hệ](#liên-hệ)
 
-- Kiểm tra phát ngôn về khí hậu dựa trên dữ liệu thực tế từ NASA và NCEI.
-- Sử dụng multi-agent debate: các "Claimant" (ủng hộ, phản đối, GPT-4) tranh luận và một "Verifier" tổng hợp kết quả.
-- Phân tích cảm xúc và ý định của phát ngôn để đánh giá nguy cơ lan truyền thông tin sai lệch.
-- Đánh giá mức độ tin cậy, giải thích chi tiết, và đề xuất câu hỏi bổ sung nếu cần.
+## Tính năng
 
+- **Kiểm tra dữ liệu khí hậu**: Xác thực phát ngôn dựa trên dữ liệu thực tế từ NASA, NCEI và các nguồn tin uy tín
+- **Multi-Agent Debate**: Các agent (ủng hộ, phản đối, trung lập) tranh luận để đạt được kết luận khách quan
+- **Phân tích tâm lý**: Đánh giá cảm xúc, ý định và rủi ro lan truyền thông tin sai lệch
+- **Đánh giá toàn diện**: Cung cấp mức độ tin cậy, giải thích chi tiết, các bằng chứng hỗ trợ và câu hỏi bổ sung
+- **Vectorstore**: Tích hợp ChromaDB để lưu trữ và tìm kiếm dữ liệu khí hậu hiệu quả
+- **API OpenAI**: Sử dụng GPT-4 để phân tích ngôn ngữ tự nhiên và lập luận
 
-## Cài đặt
+## Kiến trúc hệ thống
 
-1. Tạo môi trường Python 3.12 (khuyến nghị).
-2. Cài đặt các thư viện:
-   ```sh
-   pip install -r requirement.txt
-   ```
+### Thành phần chính
 
-## Sử dụng
-
-1. Mở `TruthSeeker.ipynb` bằng Jupyter hoặc VS Code.
-2. Thiết lập API key cho OpenAI và NewsAPI (thay thế biến `your_openai` và `NEWSAPI_KEY` trong notebook).
-3. Chạy các cell để khởi tạo vectorstore, phân tích phát ngôn, và nhận kết quả kiểm tra.
-
-Ví dụ kiểm tra phát ngôn:
-
-```python
-statement = "Of course the climate is changing. It always has. It always will"
-result = truthseekers(statement)
-print(json.dumps(result, indent=2, ensure_ascii=False))
+```
+TruthSeeker
+├── Claimant (Người ủng hộ)     - Phán xét ủng hộ phát ngôn
+├── Denier (Người phản đối)     - Phán xét phản đối phát ngôn
+├── Neutral Agent (Agent trung lập) - Phán xét khách quan
+├── Intent Analyzer              - Phân tích ý định và cảm xúc
+└── Verifier (Bộ xác thực)      - Tổng hợp kết quả và đưa ra kết luận
 ```
 
-## Quy trình kiểm tra
+### Quy trình xác thực
 
-- **Claimant Assess**: Mỗi agent (Support, Denier, GPT-4) đánh giá phát ngôn dựa trên dữ liệu và kiến thức chuyên môn.
-- **Verifier**: Tổng hợp các đánh giá, xác định mức độ tin cậy, rủi ro, và đề xuất câu hỏi bổ sung nếu cần.
-- **Neutral Verifier**: Đánh giá cuối cùng, đảm bảo tính khách quan và tổng hợp các ý kiến.
+1. **Nhập phát ngôn** → Tiền xử lý và phân tách
+2. **Trích xuất dữ liệu** → Tìm kiếm dữ liệu liên quan trong vectorstore
+3. **Phân tích ý định** → Đánh giá cảm xúc, ý định lan truyền
+4. **Tranh luận đa tác nhân** → Các agent đưa ra ý kiến từ các góc độ khác nhau
+5. **Xác thực** → Bộ xác thực tổng hợp ý kiến và đưa ra kết luận cuối cùng
+6. **Xuất kết quả** → Báo cáo chi tiết với điểm tin cậy, bằng chứng, kiến nghị
 
 ## Yêu cầu hệ thống
 
-- Python >= 3.12
-- Kết nối Internet để truy cập API và tải mô hình.
+- **Python**: 3.12 hoặc cao hơn
+- **RAM**: Tối thiểu 8GB (khuyến nghị 16GB)
+- **Kết nối Internet**: Để truy cập API OpenAI, NASA, NCEI
+- **Thẻ API**:
+  - OpenAI API key (GPT-4)
+  - NewsAPI key (tùy chọn)
 
-## Tài liệu tham khảo
+### Hệ điều hành được hỗ trợ
 
-- [LangChain](https://python.langchain.com/)
-- [OpenAI API](https://platform.openai.com/)
-- [Transformers](https://huggingface.co/docs/transformers/index)
-- [ChromaDB](https://docs.trychroma.com/)
+- Windows 10/11
+- macOS 12+
+- Linux (Ubuntu 20.04+)
 
-## Đóng góp & Liên hệ
+## Cài đặt
 
-Vui lòng liên hệ tác giả hoặc tạo issue trên repository để báo lỗi hoặc đề xuất cải tiến.
+### 1. Clone repository
+
+```bash
+git clone <https://github.com/LeNguyenNhatTan Automatic-Verification-of-Climate-Claims-with-Real-Time-Data-Using-Large-Language-Models.git>
+cd Automatic-Verification-of-Climate-Claims-with-Real-Time-Data-Using-Large-Language-Models
+```
+
+### 2. Tạo môi trường ảo (khuyến nghị)
+
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# macOS/Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Cài đặt các phụ thuộc
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Cấu hình biến môi trường
+
+Tạo tệp `.env` trong thư mục gốc dự án:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+NEWSAPI_KEY=your_newsapi_key_here
+```
+
+## Cấu hình
+
+### Cấu trúc thư mục
+
+```
+app/
+├── main.py                 # Điểm khởi đầu ứng dụng
+├── schemas.py              # Định nghĩa schema dữ liệu
+├── requirements.txt        # Danh sách phụ thuộc
+├── agents/
+│   ├── claimant.py         # Agent ủng hộ
+│   ├── verifier.py         # Bộ xác thực
+│   ├── neutral_verifier.py # Bộ xác thực trung lập
+│   ├── intent_sentiment.py # Phân tích ý định và cảm xúc
+│   ├── truthseeker.py      # Hệ thống chính
+│   └── setting.py          # Cấu hình agent
+├── core/
+│   ├── config.py           # Cấu hình chung
+│   └── logging.py          # Logging
+├── rag/
+│   └── vectorstore.py      # Quản lý vectorstore
+└── archive/
+    └── chroma_store_*/     # ChromaDB lưu trữ
+```
+
+
+## Sử dụng
+
+### Chạy ứng dụng
+
+#### Tùy chọn 1: Chạy trực tiếp
+
+```bash
+python app/main.py
+```
+
+#### Tùy chọn 2: Chạy với Docker
+
+```bash
+docker-compose -f docker-compose.dev.yml up
+```
+
+#### Tùy chọn 3: Sử dụng script bắt đầu
+
+```bash
+# Windows
+start.bat
+
+# macOS/Linux
+bash start.bat  # hoặc chỉnh sửa thành script shell
+```
+
+## Cấu trúc dữ liệu kết quả
+
+```json
+{
+  "statement": "Phát ngôn đầu vào",
+  "intent_analysis": {
+    "sentiment": "neutral|positive|negative",
+    "intent": "inform|influence|mislead",
+    "misinformation_risk": "low|medium|high"
+  },
+  "assessments": {
+    "support": {
+      "reasoning": "Lập luận ủng hộ",
+      "confidence": 0.0-1.0,
+      "evidence": ["bằng chứng 1", "bằng chứng 2"]
+    },
+    "oppose": {
+      "reasoning": "Lập luận phản đối",
+      "confidence": 0.0-1.0,
+      "evidence": ["bằng chứng 1", "bằng chứng 2"]
+    },
+    "neutral": {
+      "reasoning": "Lập luận trung lập",
+      "confidence": 0.0-1.0,
+      "evidence": ["bằng chứng 1", "bằng chứng 2"]
+    }
+  },
+  "verification": {
+    "verdict": "accurate|partially_accurate|inaccurate|unclear",
+    "confidence_score": 0.0-1.0,
+    "explanation": "Giải thích chi tiết",
+    "supporting_evidence": ["bằng chứng"],
+    "additional_questions": ["câu hỏi bổ sung"]
+  }
+}
+```
+
+## Quy trình xác thực chi tiết
+
+### Bước 1: Nhập và tiền xử lý
+- Nhận phát ngôn từ người dùng
+- Làm sạch và chuẩn hóa văn bản
+- Phân tách từ khóa chính
+
+### Bước 2: Trích xuất thông tin liên quan
+- Tìm kiếm trong ChromaDB
+- Lấy dữ liệu từ NASA API
+- Lấy dữ liệu từ NCEI API
+
+### Bước 3: Phân tích ý định
+- Xác định cảm xúc (sentiment)
+- Xác định ý định (intent)
+- Đánh giá rủi ro lan truyền thông tin sai lệch
+
+### Bước 4: Tranh luận đa tác nhân
+- **Claimant (Ủng hộ)**: Lập luận ủng hộ phát ngôn
+- **Verifier (Phản đối)**: Lập luận phản đối phát ngôn
+- **Neutral Agent**: Lập luận khách quan
+
+### Bước 5: Xác thực cuối cùng
+- Tổng hợp các lập luận
+- Tính điểm tin cậy tổng hợp
+- Đưa ra kết luận (chính xác, một phần chính xác, sai lệch, không rõ)
+- Đề xuất câu hỏi bổ sung
+
+## API và Tích hợp
+
+### OpenAI API
+
+Dùng GPT-4 cho phân tích ngôn ngữ tự nhiên:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+```
+
+### NASA API
+
+Trích xuất dữ liệu về khí hậu:
+
+```
+https://api.nasa.gov/climate/data
+```
+
+### NCEI API
+
+Dữ liệu khí tượng học toàn cầu:
+
+```
+https://www.ncei.noaa.gov/products/weather-global-temperature-index
+```
+
+### ChromaDB
+
+Lưu trữ vector của tài liệu:
+
+```python
+from app.rag.vectorstore import VectorStore
+
+vectorstore = VectorStore()
+results = vectorstore.search(query, top_k=5)
+```
+
+## Liên hệ
+
+- **GitHub Issues**: Báo cáo bugs hoặc đề xuất features
+- **Email**: Liên hệ tác giả qua email
 
 ---
+
+**Lưu ý**: Dự án này sử dụng OpenAI API, có thể phát sinh chi phí. Vui lòng kiểm tra giá của OpenAI trước khi sử dụng.
 
