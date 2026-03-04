@@ -11,33 +11,6 @@
 - Phân tích cảm xúc và ý định của phát ngôn để đánh giá nguy cơ lan truyền thông tin sai lệch.
 - Đánh giá mức độ tin cậy, giải thích chi tiết, và đề xuất câu hỏi bổ sung nếu cần.
 
-## Cấu trúc thư mục
-
-```
-README.md
-requirement.txt
-TruthSeeker-HNHV-2025-final.docx
-TruthSeeker.ipynb
-archive/
-  chroma_store_nasa/
-    chroma.sqlite3
-    <id>/
-      data_level0.bin
-      header.bin
-      length.bin
-      link_lists.bin
-  chroma_store_ncei/
-    chroma.sqlite3
-    <id>/
-      data_level0.bin
-      header.bin
-      length.bin
-      link_lists.bin
-```
-
-- `TruthSeeker.ipynb`: Notebook chính chứa toàn bộ logic kiểm tra phát ngôn.
-- `archive/chroma_store_nasa`, `archive/chroma_store_ncei`: Lưu trữ vectorstore dữ liệu NASA và NCEI.
-- `requirement.txt`: Danh sách thư viện cần thiết.
 
 ## Cài đặt
 
