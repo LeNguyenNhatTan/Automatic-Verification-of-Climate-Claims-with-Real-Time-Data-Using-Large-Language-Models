@@ -1,8 +1,8 @@
 services:
   climate_api:
     build:
-      context: .
-      dockerfile: app/Dockerfile
+      context: ./app
+      dockerfile: Dockerfile
     image: climate_app:prod
     container_name: climate_api
     restart: always
